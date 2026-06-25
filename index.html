@@ -1,0 +1,322 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>風格資料庫 — NotebookLM / Banana AI 圖像風格生成器</title>
+<style>
+:root{
+  --bg:#0b1220; --card:#111d2d; --line:#26364d; --text:#e9f0fa;
+  --muted:#8fa4bd; --accent:#43a5ff;
+}
+*{box-sizing:border-box}
+body{
+  margin:0; color:var(--text);
+  background:radial-gradient(circle at top,#16243a,#08101d 45%,#050913);
+  font-family:system-ui,-apple-system,"Noto Sans TC",sans-serif;
+}
+.wrap{max-width:1600px;margin:auto;padding:28px}
+header{display:flex;gap:18px;justify-content:space-between;align-items:flex-end;margin-bottom:22px;flex-wrap:wrap}
+h1{font-size:28px;margin:0 0 8px}
+.sub{color:var(--muted);font-size:14px}
+.tools{display:flex;gap:10px;flex-wrap:wrap}
+input,select{
+  background:#0d1828;color:var(--text);border:1px solid var(--line);
+  border-radius:10px;padding:11px 14px;font-size:14px;font-family:inherit;
+}
+input:focus,select:focus{outline:none;border-color:var(--accent)}
+#q{min-width:230px}
+.count{color:var(--muted);font-size:13px;margin:0 0 14px}
+
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:18px}
+.card{
+  background:linear-gradient(180deg,#132238,#0f1a2a);
+  border:1px solid var(--line);border-radius:14px;overflow:hidden;
+  box-shadow:0 12px 35px #0006;display:flex;flex-direction:column;
+}
+.card img{width:100%;display:block;aspect-ratio:16/9;object-fit:cover;background:#0a1422}
+.body{padding:14px;display:flex;flex-direction:column;gap:8px;flex:1}
+.titleRow{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+h2{font-size:15px;margin:0;line-height:1.3}
+.zh{color:var(--muted);font-size:12.5px}
+.tag{font-size:11px;color:#bcd3ee;background:#13314e;border:1px solid #28507a;border-radius:999px;padding:2px 9px;white-space:nowrap}
+.promptBox{position:relative;background:#08111f;border:1px solid #29405c;border-radius:12px;padding:34px 12px 12px;min-height:118px;margin-top:auto}
+.label{position:absolute;left:12px;top:9px;color:#9fb4ce;font-size:11px;letter-spacing:.5px}
+.copy{position:absolute;right:8px;top:7px;border:1px solid #2f78b8;background:#123353;color:#cfe9ff;border-radius:8px;padding:5px 10px;cursor:pointer;font-size:12px}
+.copy:hover{background:#17436b}
+.copy.done{background:#174a32;color:#d7ffe7;border-color:#2e7d4f}
+.prompt{font-size:12.5px;line-height:1.55;color:#dbe8f7;word-break:break-word}
+.userBadge{position:absolute;left:12px;bottom:-9px;display:none}
+.card.user .userBadge{display:block;font-size:10px;color:#ffd9a0;background:#3a2a12;border:1px solid #6b4d1f;border-radius:999px;padding:1px 8px}
+.card .del{display:none}
+.card.user .del{display:inline-block;position:absolute;right:8px;bottom:8px;border:none;background:transparent;color:#ff8a8a;cursor:pointer;font-size:11px}
+
+footer{margin-top:24px;text-align:center;color:var(--muted);border:1px solid var(--line);border-radius:14px;padding:16px;font-size:13px}
+
+/* 管理面板 */
+.fab{position:fixed;right:22px;bottom:22px;z-index:30;border:none;border-radius:999px;
+  background:linear-gradient(135deg,#43a5ff,#2f7de0);color:#fff;font-size:14px;font-weight:600;
+  padding:13px 20px;cursor:pointer;box-shadow:0 10px 30px #0008}
+.fab:hover{filter:brightness(1.08)}
+.overlay{position:fixed;inset:0;background:#04070dcc;backdrop-filter:blur(3px);z-index:40;display:none;align-items:flex-start;justify-content:center;padding:30px 16px;overflow:auto}
+.overlay.open{display:flex}
+.panel{background:#0f1a2a;border:1px solid var(--line);border-radius:16px;width:100%;max-width:560px;padding:22px}
+.panel h3{margin:0 0 4px;font-size:18px}
+.panel p.hint{margin:0 0 16px;color:var(--muted);font-size:13px}
+.field{display:flex;flex-direction:column;gap:6px;margin-bottom:13px}
+.field label{font-size:13px;color:#cfe0f5}
+.field input,.field select,.field textarea{
+  background:#0d1828;color:var(--text);border:1px solid var(--line);border-radius:10px;
+  padding:10px 12px;font-size:14px;font-family:inherit;width:100%;
+}
+.field textarea{min-height:80px;resize:vertical}
+.row2{display:flex;gap:12px}
+.row2 .field{flex:1}
+.preview{width:100%;aspect-ratio:16/9;border-radius:10px;border:1px dashed #33495f;object-fit:cover;background:#0a1422;margin-top:4px}
+.panel .actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:8px}
+.btn{border:none;border-radius:10px;padding:11px 16px;font-size:14px;cursor:pointer;font-family:inherit}
+.btn.primary{background:#2f7de0;color:#fff}
+.btn.ghost{background:#16273c;color:#cfe0f5;border:1px solid var(--line)}
+.btn.warn{background:#3a1c1c;color:#ffb3b3;border:1px solid #5e2b2b}
+.btn:hover{filter:brightness(1.1)}
+.divider{height:1px;background:var(--line);margin:18px 0}
+.exportHint{color:var(--muted);font-size:12.5px;line-height:1.6}
+.exportHint code{background:#0a1422;border:1px solid var(--line);border-radius:5px;padding:1px 5px}
+.close{float:right;background:transparent;border:none;color:var(--muted);font-size:20px;cursor:pointer;line-height:1}
+
+@media(max-width:700px){header{display:block}.tools{margin-top:14px}#q{width:100%}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div>
+      <h1>風格資料庫</h1>
+    </div>
+    <div class="tools">
+      <input id="q" placeholder="搜尋風格或提示詞…">
+      <select id="cat"><option value="">全部分類</option></select>
+    </div>
+  </header>
+  <div class="count" id="count"></div>
+  <main class="grid" id="grid"></main>
+  <footer>點擊提示詞右上角的「複製」按鈕，即可複製提示詞到剪貼簿。<br>右下角「＋ 管理」可手動新增專屬風格與縮圖。</footer>
+</div>
+
+<button class="fab" id="fab">＋ 管理</button>
+
+<div class="overlay" id="overlay">
+  <div class="panel">
+    <button class="close" id="closePanel" title="關閉">✕</button>
+    <h3>新增風格</h3>
+    <p class="hint">新增的風格會存在這台瀏覽器（localStorage）。要永久寫入網站，請按下方「匯出 styles.js」覆蓋原檔。</p>
+
+    <div class="row2">
+      <div class="field">
+        <label>英文名稱（大標）</label>
+        <input id="f_en" placeholder="e.g. Watercolor">
+      </div>
+      <div class="field">
+        <label>中文名稱（副標）</label>
+        <input id="f_zh" placeholder="例：水彩手繪">
+      </div>
+    </div>
+    <div class="field">
+      <label>分類</label>
+      <select id="f_cat"></select>
+    </div>
+    <div class="field">
+      <label>提示詞 Prompt（英文）</label>
+      <textarea id="f_prompt" placeholder="watercolor infographic, soft pigment washes, hand-painted icons…"></textarea>
+    </div>
+    <div class="field">
+      <label>縮圖（選填，建議 16:9）</label>
+      <input type="file" id="f_img" accept="image/*">
+      <img class="preview" id="f_preview" alt="預覽" style="display:none">
+    </div>
+    <div class="actions">
+      <button class="btn primary" id="addBtn">加入風格</button>
+      <button class="btn ghost" id="clearForm">清空</button>
+    </div>
+
+    <div class="divider"></div>
+    <p class="exportHint">
+      目前自訂風格：<b id="userCount">0</b> 個。<br>
+      按「匯出 styles.js」會下載一份含內建＋自訂的完整 <code>styles.js</code>，覆蓋專案中同名檔即可永久保存、也能上傳 GitHub Pages。
+    </p>
+    <div class="actions">
+      <button class="btn primary" id="exportBtn">⬇ 匯出 styles.js</button>
+      <button class="btn warn" id="resetBtn">清除全部自訂</button>
+    </div>
+  </div>
+</div>
+
+<script src="styles.js"></script>
+<script>
+const CATS = window.CATEGORIES || [];
+const BUILTIN = window.STYLES || [];
+const LS_KEY = "userStyles_v1";
+
+const catColors = {
+  "手繪插畫":"#e08a5a","復古懷舊":"#c98a3c","科技未來":"#3f8efc","漫畫分鏡":"#9b6be0",
+  "地圖路線":"#3fb98a","商務簡報":"#5a86d6","電影影視":"#d65a7a","遊戲動畫":"#e0b13f",
+  "藝術設計":"#e05a9b","自然科學":"#5ac0c0"
+};
+
+function loadUser(){ try{return JSON.parse(localStorage.getItem(LS_KEY))||[]}catch(e){return[]} }
+function saveUser(arr){ localStorage.setItem(LS_KEY, JSON.stringify(arr)) }
+
+/* 缺圖時的分類佔位圖（SVG data URI） */
+function placeholder(s){
+  const c = catColors[s.cat] || "#3f8efc";
+  const svg =
+    `<svg xmlns='http://www.w3.org/2000/svg' width='320' height='180'>`+
+    `<defs><linearGradient id='g' x1='0' y1='0' x2='1' y2='1'>`+
+    `<stop offset='0' stop-color='${c}' stop-opacity='.55'/>`+
+    `<stop offset='1' stop-color='#0a1422'/></linearGradient></defs>`+
+    `<rect width='320' height='180' fill='#0a1422'/>`+
+    `<rect width='320' height='180' fill='url(#g)'/>`+
+    `<text x='160' y='86' fill='#ffffff' font-family='sans-serif' font-size='20' font-weight='700' text-anchor='middle'>${esc(s.nameEn)}</text>`+
+    `<text x='160' y='112' fill='#ffffffcc' font-family='sans-serif' font-size='13' text-anchor='middle'>${esc(s.cat)}・尚未生成縮圖</text>`+
+    `</svg>`;
+  return "data:image/svg+xml;utf8,"+encodeURIComponent(svg);
+}
+function esc(t){return String(t).replace(/[<>&]/g,m=>({'<':'&lt;','>':'&gt;','&':'&amp;'}[m]))}
+
+/* 全部資料 = 內建 + 自訂 */
+function allStyles(){ return BUILTIN.concat(loadUser()); }
+
+function render(){
+  const grid = document.getElementById('grid');
+  const q = document.getElementById('q').value.trim().toLowerCase();
+  const c = document.getElementById('cat').value;
+  grid.innerHTML = "";
+  let shown = 0;
+
+  allStyles().forEach(s=>{
+    const hay = (s.nameEn+" "+s.nameZh+" "+s.cat+" "+s.prompt).toLowerCase();
+    if(q && !hay.includes(q)) return;
+    if(c && s.cat !== c) return;
+    shown++;
+
+    const card = document.createElement('article');
+    card.className = "card" + (s._user ? " user":"");
+
+    const img = document.createElement('img');
+    img.alt = s.nameEn;
+    img.src = s.thumb || placeholder(s);
+    img.onerror = function(){ this.onerror=null; this.src=placeholder(s); };
+
+    card.appendChild(img);
+
+    const body = document.createElement('div');
+    body.className = "body";
+    body.innerHTML =
+      `<div class="titleRow"><h2>${esc(s.nameEn)}</h2><span class="tag">${esc(s.cat)}</span></div>`+
+      `<div class="zh">${esc(s.nameZh)}</div>`+
+      `<div class="promptBox">`+
+        `<span class="label">提示詞 Prompt</span>`+
+        `<button class="copy" type="button">複製</button>`+
+        `<div class="prompt">${esc(s.prompt)}</div>`+
+        `<span class="userBadge">自訂</span>`+
+        (s._user?`<button class="del" data-id="${s.id}">刪除</button>`:``)+
+      `</div>`;
+    card.appendChild(body);
+
+    body.querySelector('.copy').addEventListener('click', async (e)=>{
+      const btn = e.currentTarget;
+      try{ await navigator.clipboard.writeText(s.prompt); }
+      catch(_){ const t=document.createElement('textarea'); t.value=s.prompt; document.body.appendChild(t); t.select(); document.execCommand('copy'); t.remove(); }
+      btn.textContent="已複製"; btn.classList.add('done');
+      setTimeout(()=>{btn.textContent="複製"; btn.classList.remove('done')},1200);
+    });
+    const del = body.querySelector('.del');
+    if(del) del.addEventListener('click', ()=>removeUser(s.id));
+
+    grid.appendChild(card);
+  });
+
+  document.getElementById('count').textContent = `共 ${shown} 個風格` + ((q||c)?`（已篩選）`:"");
+}
+
+/* 分類下拉與表單下拉 */
+function fillCats(){
+  const sel = document.getElementById('cat');
+  const fsel = document.getElementById('f_cat');
+  CATS.forEach(c=>{
+    sel.insertAdjacentHTML('beforeend', `<option>${c}</option>`);
+    fsel.insertAdjacentHTML('beforeend', `<option>${c}</option>`);
+  });
+}
+
+/* ── 管理面板 ── */
+const overlay = document.getElementById('overlay');
+document.getElementById('fab').onclick = ()=>{ overlay.classList.add('open'); refreshUserCount(); };
+document.getElementById('closePanel').onclick = ()=> overlay.classList.remove('open');
+overlay.addEventListener('click', e=>{ if(e.target===overlay) overlay.classList.remove('open'); });
+
+let pendingImg = "";
+document.getElementById('f_img').addEventListener('change', e=>{
+  const file = e.target.files[0];
+  if(!file){ pendingImg=""; return; }
+  const r = new FileReader();
+  r.onload = ()=>{ pendingImg = r.result; const p=document.getElementById('f_preview'); p.src=r.result; p.style.display="block"; };
+  r.readAsDataURL(file);
+});
+
+function nextId(){ return Math.max(0, ...allStyles().map(s=>+s.id||0)) + 1; }
+
+document.getElementById('addBtn').onclick = ()=>{
+  const en = document.getElementById('f_en').value.trim();
+  const zh = document.getElementById('f_zh').value.trim();
+  const cat = document.getElementById('f_cat').value;
+  const prompt = document.getElementById('f_prompt').value.trim();
+  if(!en || !prompt){ alert("英文名稱與提示詞為必填"); return; }
+  const arr = loadUser();
+  arr.push({ id: nextId(), cat, nameEn:en, nameZh:zh, prompt, thumb: pendingImg || "", _user:true });
+  saveUser(arr);
+  clearForm();
+  render(); refreshUserCount();
+};
+function clearForm(){
+  ['f_en','f_zh','f_prompt'].forEach(id=>document.getElementById(id).value="");
+  document.getElementById('f_img').value="";
+  pendingImg=""; const p=document.getElementById('f_preview'); p.style.display="none"; p.src="";
+}
+document.getElementById('clearForm').onclick = clearForm;
+
+function removeUser(id){
+  saveUser(loadUser().filter(s=>s.id!==id));
+  render(); refreshUserCount();
+}
+function refreshUserCount(){ document.getElementById('userCount').textContent = loadUser().length; }
+
+document.getElementById('resetBtn').onclick = ()=>{
+  if(confirm("確定要清除所有自訂風格？此動作無法復原。")){
+    localStorage.removeItem(LS_KEY); render(); refreshUserCount();
+  }
+};
+
+/* 匯出 styles.js（內建 + 自訂合併） */
+document.getElementById('exportBtn').onclick = ()=>{
+  const merged = BUILTIN.map(stripFlag).concat(loadUser().map(stripFlag));
+  const body = merged.map(s=>"  "+JSON.stringify(s)).join(",\n");
+  const out =
+    "/* 風格資料庫 — 由管理面板匯出（內建 + 自訂） */\n"+
+    "window.CATEGORIES = "+JSON.stringify(CATS)+";\n\n"+
+    "window.STYLES = [\n"+body+"\n];\n";
+  const blob = new Blob([out], {type:"text/javascript;charset=utf-8"});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob); a.download = "styles.js";
+  a.click(); URL.revokeObjectURL(a.href);
+};
+function stripFlag(s){ const o={...s}; delete o._user; return o; }
+
+/* 初始化 */
+fillCats();
+document.getElementById('q').addEventListener('input', render);
+document.getElementById('cat').addEventListener('change', render);
+render();
+</script>
+</body>
+</html>
