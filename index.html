@@ -3,591 +3,314 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>風格資料庫 — NotebookLM / Banana AI 圖像風格生成器</title>
-<script src="https://accounts.google.com/gsi/client" async></script>
+<title>風格資料庫 - 圖像生成提示詞</title>
 <style>
 :root{
-  --bg:#0b1220; --card:#111d2d; --line:#26364d; --text:#e9f0fa;
-  --muted:#8fa4bd; --accent:#43a5ff;
+  --bg:#08101d;
+  --panel:#101b2c;
+  --card:#132238;
+  --card2:#0f1a2a;
+  --line:#2a3d57;
+  --text:#edf4ff;
+  --muted:#92a6bf;
+  --accent:#49a8ff;
+  --accent2:#6fd6c9;
 }
 *{box-sizing:border-box}
 body{
-  margin:0; color:var(--text);
-  background:radial-gradient(circle at top,#16243a,#08101d 45%,#050913);
-  font-family:system-ui,-apple-system,"Noto Sans TC",sans-serif;
+  margin:0;
+  color:var(--text);
+  background:
+    radial-gradient(circle at 20% 0%,#172a45 0,#0b1424 42%,#060b14 100%);
+  font-family:system-ui,-apple-system,"Segoe UI","Noto Sans TC",sans-serif;
 }
-.wrap{max-width:1600px;margin:auto;padding:28px}
-header{display:flex;gap:18px;justify-content:space-between;align-items:flex-end;margin-bottom:22px;flex-wrap:wrap}
-h1{font-size:28px;margin:0 0 8px}
-.tools{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
-input,select{
-  background:#0d1828;color:var(--text);border:1px solid var(--line);
-  border-radius:10px;padding:11px 14px;font-size:14px;font-family:inherit;
+.wrap{max-width:1680px;margin:auto;padding:26px 22px 18px}
+header{
+  display:flex;
+  align-items:flex-end;
+  justify-content:space-between;
+  gap:18px;
+  margin-bottom:20px;
 }
-input:focus,select:focus{outline:none;border-color:var(--accent)}
-#q{min-width:230px}
-.count{color:var(--muted);font-size:13px;margin:0 0 14px}
-.manageNote{color:#ffd9a0;font-size:13px;margin:0 0 14px;display:none}
-body.manage .manageNote{display:block}
-
-/* 四欄表格 */
-.tableWrap{border:1px solid var(--line);border-radius:14px;overflow:hidden;box-shadow:0 12px 35px #0006}
-table{width:100%;border-collapse:collapse;background:#0f1a2a}
-thead th{
-  background:#13243a;color:#cfe0f5;font-size:13px;font-weight:600;text-align:left;
-  padding:13px 14px;border-bottom:1px solid var(--line);white-space:nowrap;
+h1{margin:0 0 7px;font-size:28px;letter-spacing:0;font-weight:800}
+.sub{color:var(--muted);font-size:14px}
+.tools{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.search,.select{
+  height:42px;
+  color:var(--text);
+  background:#0d1828;
+  border:1px solid var(--line);
+  border-radius:8px;
+  padding:0 13px;
+  font:inherit;
 }
-tbody td{padding:14px;border-bottom:1px solid #1b293c;vertical-align:top;font-size:13px;line-height:1.6}
-tbody tr:last-child td{border-bottom:none}
-tbody tr:hover{background:#12203352}
-.col-thumb{width:200px}
-.col-en{width:30%}
-.col-zh{width:26%}
-
-/* 縮圖欄 */
-.thumb{width:172px;aspect-ratio:16/9;border-radius:10px;background:#0a1422;border:1px solid #20344c;object-fit:cover;display:block}
-.thumb-empty{
-  width:172px;aspect-ratio:16/9;border-radius:10px;background:#0a1422;
-  border:1px dashed #33495f;display:flex;align-items:center;justify-content:center;
-  color:#5e7290;font-size:12px;text-align:center;padding:6px;
+.search{width:260px}
+.search:focus,.select:focus{outline:2px solid #49a8ff55;border-color:var(--accent)}
+.meta{
+  display:flex;
+  justify-content:space-between;
+  gap:16px;
+  color:var(--muted);
+  font-size:13px;
+  margin:0 0 12px;
 }
-.thumb-up{margin-top:8px;display:none}
-body.manage .thumb-up{display:block}
-.thumb-up input[type=file]{font-size:11px;width:172px}
-.thumb-up .clearThumb{margin-top:5px;border:none;background:transparent;color:#ff8a8a;cursor:pointer;font-size:11px;padding:0}
-
-/* 提示詞欄 */
-.nameEn{font-size:14px;font-weight:600;color:#eaf2ff;margin-bottom:4px}
-.tag{font-size:11px;color:#bcd3ee;background:#13314e;border:1px solid #28507a;border-radius:999px;padding:2px 9px;white-space:nowrap;display:inline-block;margin-bottom:8px}
-.promptText{color:#dbe8f7;word-break:break-word;margin-bottom:8px}
-.promptZhText{color:#cdd9ea}
-.nameZh{font-size:12.5px;color:var(--muted);margin-bottom:6px}
-.desc{color:#c4d2e4}
-.copy{border:1px solid #2f78b8;background:#123353;color:#cfe9ff;border-radius:8px;padding:5px 11px;cursor:pointer;font-size:12px}
+.grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(260px,1fr));
+  gap:14px;
+}
+.card{
+  background:linear-gradient(180deg,var(--card),var(--card2));
+  border:1px solid var(--line);
+  border-radius:8px;
+  overflow:hidden;
+  box-shadow:0 12px 28px #0005;
+  min-width:0;
+}
+.thumbWrap{position:relative;background:#08101d}
+.thumb{
+  display:block;
+  width:100%;
+  aspect-ratio:16/9;
+  object-fit:cover;
+}
+.cat{
+  position:absolute;
+  left:10px;
+  bottom:10px;
+  max-width:calc(100% - 20px);
+  color:#dff2ff;
+  background:#06101dcc;
+  border:1px solid #ffffff26;
+  border-radius:999px;
+  padding:3px 8px;
+  font-size:11px;
+  backdrop-filter:blur(5px);
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+.body{padding:12px 12px 13px}
+.titleRow{
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap:10px;
+  margin-bottom:8px;
+}
+h2{
+  margin:0;
+  font-size:14px;
+  line-height:1.3;
+  font-weight:800;
+  overflow-wrap:anywhere;
+}
+.copy{
+  flex:0 0 auto;
+  width:32px;
+  height:30px;
+  display:grid;
+  place-items:center;
+  color:#d8efff;
+  background:#123353;
+  border:1px solid #2f78b8;
+  border-radius:7px;
+  cursor:pointer;
+  font-size:14px;
+}
 .copy:hover{background:#17436b}
-.copy.done{background:#174a32;color:#d7ffe7;border-color:#2e7d4f}
-.userBadge{display:inline-block;font-size:10px;color:#ffd9a0;background:#3a2a12;border:1px solid #6b4d1f;border-radius:999px;padding:1px 8px;margin-left:6px}
-.delRow{display:none;margin-top:10px;border:none;background:transparent;color:#ff8a8a;cursor:pointer;font-size:11px;padding:0}
-body.manage .delRow{display:inline-block}
-
-footer{margin-top:24px;text-align:center;color:var(--muted);border:1px solid var(--line);border-radius:14px;padding:16px;font-size:13px}
-
-/* 管理按鈕 / 面板 */
-.fab{position:fixed;right:22px;bottom:22px;z-index:30;border:none;border-radius:999px;
-  background:linear-gradient(135deg,#43a5ff,#2f7de0);color:#fff;font-size:14px;font-weight:600;
-  padding:13px 20px;cursor:pointer;box-shadow:0 10px 30px #0008}
-.fab:hover{filter:brightness(1.08)}
-body.manage .fab{background:linear-gradient(135deg,#e0b13f,#c98a3c)}
-.overlay{position:fixed;inset:0;background:#04070dcc;backdrop-filter:blur(3px);z-index:40;display:none;align-items:flex-start;justify-content:center;padding:30px 16px;overflow:auto}
-.overlay.open{display:flex}
-.panel{background:#0f1a2a;border:1px solid var(--line);border-radius:16px;width:100%;max-width:560px;padding:22px}
-.panel h3{margin:0 0 4px;font-size:18px}
-.panel p.hint{margin:0 0 16px;color:var(--muted);font-size:13px}
-.field{display:flex;flex-direction:column;gap:6px;margin-bottom:13px}
-.field label{font-size:13px;color:#cfe0f5}
-.field input,.field select,.field textarea{
-  background:#0d1828;color:var(--text);border:1px solid var(--line);border-radius:10px;
-  padding:10px 12px;font-size:14px;font-family:inherit;width:100%;
+.copy.done{background:#16462f;border-color:#2f8354;color:#ddffe9}
+.promptLabel{color:#99adc6;font-size:11px;margin-bottom:6px}
+.prompt{
+  color:#dce8f7;
+  font-size:12.5px;
+  line-height:1.65;
+  display:-webkit-box;
+  -webkit-line-clamp:4;
+  -webkit-box-orient:vertical;
+  overflow:hidden;
 }
-.field textarea{min-height:70px;resize:vertical}
-.row2{display:flex;gap:12px}
-.row2 .field{flex:1}
-.inlineRow{display:flex;gap:8px;align-items:center}
-.inlineRow input{flex:1}
-.preview{width:100%;aspect-ratio:16/9;border-radius:10px;border:1px dashed #33495f;object-fit:cover;background:#0a1422;margin-top:4px}
-.panel .actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:8px}
-.btn{border:none;border-radius:10px;padding:11px 16px;font-size:14px;cursor:pointer;font-family:inherit}
-.btn.primary{background:#2f7de0;color:#fff}
-.btn.ghost{background:#16273c;color:#cfe0f5;border:1px solid var(--line)}
-.btn.warn{background:#3a1c1c;color:#ffb3b3;border:1px solid #5e2b2b}
-.btn:hover{filter:brightness(1.1)}
-.divider{height:1px;background:var(--line);margin:18px 0}
-.exportHint{color:var(--muted);font-size:12.5px;line-height:1.6}
-.exportHint code{background:#0a1422;border:1px solid var(--line);border-radius:5px;padding:1px 5px}
-.close{float:right;background:transparent;border:none;color:var(--muted);font-size:20px;cursor:pointer;line-height:1}
-.chip{display:inline-flex;align-items:center;gap:6px;background:#13243a;border:1px solid var(--line);border-radius:999px;padding:4px 10px;font-size:12px;color:#cfe0f5;margin:0 6px 6px 0}
-.chip button{border:none;background:transparent;color:#ff8a8a;cursor:pointer;font-size:13px;line-height:1;padding:0}
-.who{font-size:12px;color:#9fe3b3;margin:0 0 12px}
-.who .signout{margin-left:8px;color:#ff9a9a;cursor:pointer;text-decoration:underline;background:none;border:none;font-size:12px}
-
-/* 登入視窗 */
-.authBox{text-align:center;padding:8px 4px}
-.authBox h3{font-size:18px;margin:0 0 6px}
-.authBox p{color:var(--muted);font-size:13px;margin:0 0 18px;line-height:1.6}
-#gbtn{display:flex;justify-content:center;min-height:44px}
-.authWarn{color:#ffb3b3;font-size:12.5px;margin-top:14px;line-height:1.6;text-align:left;background:#2a1414;border:1px solid #5e2b2b;border-radius:10px;padding:10px 12px;display:none}
-.authWarn code{background:#0a1422;border:1px solid var(--line);border-radius:5px;padding:1px 5px}
-.authErr{color:#ffb3b3;font-size:13px;margin-top:12px;min-height:18px}
-
-@media(max-width:900px){
-  .col-thumb,.col-en,.col-zh{width:auto}
-  thead{display:none}
-  table,tbody,tr,td{display:block;width:100%}
-  tbody tr{border-bottom:1px solid var(--line);padding:6px 0}
-  tbody td{border:none;padding:8px 14px}
-  td[data-h]::before{content:attr(data-h);display:block;color:#8fa4bd;font-size:11px;margin-bottom:4px}
+.card.expanded .prompt{
+  display:block;
+  -webkit-line-clamp:unset;
 }
-@media(max-width:700px){header{display:block}.tools{margin-top:14px}#q{width:100%}}
+.empty{
+  display:none;
+  text-align:center;
+  color:var(--muted);
+  border:1px solid var(--line);
+  border-radius:8px;
+  padding:26px;
+  background:#0d1828;
+}
+footer{
+  margin-top:12px;
+  color:var(--muted);
+  border:1px solid var(--line);
+  border-radius:8px;
+  padding:12px;
+  text-align:center;
+  font-size:13px;
+}
+.toast{
+  position:fixed;
+  left:50%;
+  bottom:22px;
+  transform:translateX(-50%) translateY(12px);
+  color:#eafff5;
+  background:#123522;
+  border:1px solid #2d7c51;
+  border-radius:999px;
+  padding:8px 13px;
+  font-size:13px;
+  opacity:0;
+  pointer-events:none;
+  transition:.18s ease;
+}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+@media(max-width:760px){
+  .wrap{padding:18px 12px}
+  header{display:block}
+  h1{font-size:24px}
+  .tools{margin-top:14px}
+  .search,.select{width:100%}
+  .meta{display:block}
+  .grid{grid-template-columns:1fr;gap:12px}
+}
 </style>
 </head>
 <body>
 <div class="wrap">
   <header>
     <div>
-      <h1>風格資料庫</h1>
+      <h1>風格資料庫 - 圖像生成提示詞</h1>
+      <div class="sub">32 種 NotebookLM / Banana AI 圖像風格縮圖。每張縮圖只保留風格方向，提示詞可一鍵複製。</div>
     </div>
     <div class="tools">
-      <input id="q" placeholder="搜尋風格或提示詞…">
-      <select id="cat"><option value="">全部分類</option></select>
+      <input class="search" id="q" placeholder="搜尋風格或提示詞...">
+      <select class="select" id="cat">
+        <option value="">全部分類</option>
+      </select>
     </div>
   </header>
-  <div class="count" id="count"></div>
-  <div class="manageNote">管理模式已開啟：可在「縮圖」欄逐列上傳圖片、刪除任一提示詞、在面板新增分類。變更暫存在這台瀏覽器，按「匯出 styles.js」可永久寫入。</div>
 
-  <div class="tableWrap">
-    <table>
-      <thead>
-        <tr>
-          <th class="col-thumb">縮圖</th>
-          <th class="col-en">英文提示詞</th>
-          <th class="col-zh">中文提示詞</th>
-          <th>圖片說明</th>
-        </tr>
-      </thead>
-      <tbody id="tbody"></tbody>
-    </table>
+  <div class="meta">
+    <div id="count">載入中</div>
+    <div>點擊複製按鈕取得英文提示詞</div>
   </div>
 
-  <footer>每列分四欄：縮圖｜英文提示詞｜中文提示詞｜圖片說明。點各欄「複製」可複製提示詞。<br>右下角「管理」需以授權的 Google 帳號登入，才能上傳縮圖、新增分類、刪除提示詞與匯出。</footer>
+  <main class="grid" id="grid"></main>
+  <div class="empty" id="empty">找不到符合條件的風格。</div>
+
+  <footer>提示詞為英文版，縮圖為重新生成的原創示意圖，不使用原始縮圖構圖。</footer>
 </div>
-
-<button class="fab" id="fab">⚙ 管理</button>
-
-<!-- 登入視窗 -->
-<div class="overlay" id="authOverlay">
-  <div class="panel authBox">
-    <button class="close" id="closeAuth" title="關閉">✕</button>
-    <h3>管理員登入</h3>
-    <p>請以授權的 Google 帳號登入後台。<br>僅 <b id="adminEmailLabel"></b> 可進入管理。</p>
-    <div id="gbtn"></div>
-    <div class="authErr" id="authErr"></div>
-    <div class="authWarn" id="authWarn">
-      尚未設定 Google OAuth Client ID。請在 <code>index.html</code> 把
-      <code>GOOGLE_CLIENT_ID</code> 換成你在 Google Cloud Console 建立的用戶端 ID，
-      並把本站網址加入「已授權的 JavaScript 來源」。設定步驟見 README。
-    </div>
-  </div>
-</div>
-
-<!-- 管理面板 -->
-<div class="overlay" id="overlay">
-  <div class="panel">
-    <button class="close" id="closePanel" title="關閉">✕</button>
-    <h3>後台管理</h3>
-    <p class="who" id="whoBar"></p>
-    <p class="hint">表格「縮圖」欄可逐列上傳自己生成的縮圖；可新增分類、刪除任一提示詞。所有變更先存在這台瀏覽器，按「匯出 styles.js」可下載永久版本覆蓋原檔。</p>
-
-    <div class="actions">
-      <button class="btn primary" id="toggleManage">切換管理模式</button>
-    </div>
-
-    <div class="divider"></div>
-    <h3 style="font-size:16px">分類管理</h3>
-    <div class="field">
-      <label>新增分類</label>
-      <div class="inlineRow">
-        <input id="f_newcat" placeholder="例：教育教學">
-        <button class="btn ghost" id="addCatBtn">新增</button>
-      </div>
-    </div>
-    <div id="catChips"></div>
-
-    <div class="divider"></div>
-    <h3 style="font-size:16px">新增風格</h3>
-    <div class="row2">
-      <div class="field">
-        <label>英文名稱</label>
-        <input id="f_en" placeholder="e.g. Watercolor">
-      </div>
-      <div class="field">
-        <label>中文名稱</label>
-        <input id="f_zh" placeholder="例：水彩手繪">
-      </div>
-    </div>
-    <div class="field">
-      <label>分類</label>
-      <select id="f_cat"></select>
-    </div>
-    <div class="field">
-      <label>英文提示詞 Prompt (EN)</label>
-      <textarea id="f_promptEn" placeholder="watercolor infographic, soft pigment washes…"></textarea>
-    </div>
-    <div class="field">
-      <label>中文提示詞 Prompt (ZH)</label>
-      <textarea id="f_promptZh" placeholder="水彩資訊圖，柔和顏料暈染…"></textarea>
-    </div>
-    <div class="field">
-      <label>圖片說明</label>
-      <textarea id="f_desc" placeholder="水彩手繪風，柔美清新，適合自然、文藝主題。"></textarea>
-    </div>
-    <div class="field">
-      <label>縮圖（選填，建議 16:9）</label>
-      <input type="file" id="f_img" accept="image/*">
-      <img class="preview" id="f_preview" alt="預覽" style="display:none">
-    </div>
-    <div class="actions">
-      <button class="btn primary" id="addBtn">加入風格</button>
-      <button class="btn ghost" id="clearForm">清空</button>
-    </div>
-
-    <div class="divider"></div>
-    <p class="exportHint">
-      自訂風格：<b id="userCount">0</b> 個；已上傳縮圖：<b id="thumbCount">0</b> 張；已刪除：<b id="delCount">0</b> 筆。<br>
-      「匯出 styles.js」會下載含內建＋自訂＋已上傳縮圖、且排除已刪除項目的完整 <code>styles.js</code>，覆蓋專案同名檔即可永久保存、上傳 GitHub Pages。
-    </p>
-    <div class="actions">
-      <button class="btn primary" id="exportBtn">⬇ 匯出 styles.js</button>
-      <button class="btn ghost" id="restoreDel">還原已刪除</button>
-      <button class="btn warn" id="resetThumbs">清除已上傳縮圖</button>
-      <button class="btn warn" id="resetBtn">清除自訂風格</button>
-    </div>
-  </div>
-</div>
+<div class="toast" id="toast">已複製英文提示詞</div>
 
 <script src="styles.js"></script>
 <script>
-/* ========= 設定 ========= */
-const ADMIN_EMAIL = "prayer168@gmail.com";
-// 在 Google Cloud Console 建立 OAuth 2.0 用戶端 ID（網頁應用程式），貼到這裡：
-const GOOGLE_CLIENT_ID = "486392635363-410t8uo1teq54fnc8h9oavp15pqbf5ki.apps.googleusercontent.com";
+const data = Array.isArray(window.STYLE_PROMPTS) ? window.STYLE_PROMPTS : [];
+const grid = document.querySelector("#grid");
+const q = document.querySelector("#q");
+const cat = document.querySelector("#cat");
+const count = document.querySelector("#count");
+const empty = document.querySelector("#empty");
+const toast = document.querySelector("#toast");
 
-/* ========= 資料 ========= */
-const CATS_BUILTIN = window.CATEGORIES || [];
-const BUILTIN = window.STYLES || [];
-const LS_KEY = "userStyles_v1";
-const THUMB_KEY = "userThumbs_v1";
-const CAT_KEY = "userCats_v1";
-const DEL_KEY = "deletedIds_v1";
-const AUTH_KEY = "adminEmail_v1";
-
-function loadUser(){ try{return JSON.parse(localStorage.getItem(LS_KEY))||[]}catch(e){return[]} }
-function saveUser(arr){ localStorage.setItem(LS_KEY, JSON.stringify(arr)) }
-function loadThumbs(){ try{return JSON.parse(localStorage.getItem(THUMB_KEY))||{}}catch(e){return{}} }
-function saveThumbs(map){ localStorage.setItem(THUMB_KEY, JSON.stringify(map)) }
-function loadUserCats(){ try{return JSON.parse(localStorage.getItem(CAT_KEY))||[]}catch(e){return[]} }
-function saveUserCats(a){ localStorage.setItem(CAT_KEY, JSON.stringify(a)) }
-function loadDeleted(){ try{return JSON.parse(localStorage.getItem(DEL_KEY))||[]}catch(e){return[]} }
-function saveDeleted(a){ localStorage.setItem(DEL_KEY, JSON.stringify(a)) }
-
-function allCats(){ return CATS_BUILTIN.concat(loadUserCats().filter(c=>!CATS_BUILTIN.includes(c))); }
-function esc(t){return String(t==null?"":t).replace(/[<>&]/g,m=>({'<':'&lt;','>':'&gt;','&':'&amp;'}[m]))}
-
-/* 全部資料 = (內建 + 自訂) 去掉已刪除 */
-function allStyles(){
-  const del = new Set(loadDeleted());
-  return BUILTIN.concat(loadUser()).filter(s=>!del.has(s.id));
-}
-function thumbFor(s){ const map = loadThumbs(); return map[s.id] || s.thumb || ""; }
-
-function render(){
-  const tbody = document.getElementById('tbody');
-  const q = document.getElementById('q').value.trim().toLowerCase();
-  const c = document.getElementById('cat').value;
-  tbody.innerHTML = "";
-  let shown = 0;
-
-  allStyles().forEach(s=>{
-    const hay = (s.nameEn+" "+s.nameZh+" "+s.cat+" "+(s.promptEn||"")+" "+(s.promptZh||"")+" "+(s.desc||"")).toLowerCase();
-    if(q && !hay.includes(q)) return;
-    if(c && s.cat !== c) return;
-    shown++;
-
-    const tr = document.createElement('tr');
-    const thumb = thumbFor(s);
-
-    const tdThumb = document.createElement('td');
-    tdThumb.className = "col-thumb"; tdThumb.setAttribute('data-h','縮圖');
-    tdThumb.innerHTML =
-      (thumb
-        ? `<img class="thumb" src="${thumb}" alt="${esc(s.nameEn)}">`
-        : `<div class="thumb-empty">尚未上傳縮圖<br>(管理模式可上傳)</div>`)+
-      `<div class="thumb-up">`+
-        `<input type="file" accept="image/*" data-id="${s.id}" class="thumbInput">`+
-        (thumb?`<button class="clearThumb" data-id="${s.id}">移除縮圖</button>`:``)+
-      `</div>`;
-
-    const tdEn = document.createElement('td');
-    tdEn.className = "col-en"; tdEn.setAttribute('data-h','英文提示詞');
-    tdEn.innerHTML =
-      `<div class="nameEn">${esc(s.nameEn)}${s._user?`<span class="userBadge">自訂</span>`:``}</div>`+
-      `<span class="tag">${esc(s.cat)}</span>`+
-      `<div class="promptText">${esc(s.promptEn)}</div>`+
-      `<button class="copy" data-copy="en">複製英文</button>`+
-      `<button class="delRow" data-id="${s.id}">刪除此列</button>`;
-
-    const tdZh = document.createElement('td');
-    tdZh.className = "col-zh"; tdZh.setAttribute('data-h','中文提示詞');
-    tdZh.innerHTML =
-      `<div class="nameZh">${esc(s.nameZh)}</div>`+
-      `<div class="promptZhText">${esc(s.promptZh)}</div>`+
-      `<div style="margin-top:8px"><button class="copy" data-copy="zh">複製中文</button></div>`;
-
-    const tdDesc = document.createElement('td');
-    tdDesc.setAttribute('data-h','圖片說明');
-    tdDesc.innerHTML = `<div class="desc">${esc(s.desc)}</div>`;
-
-    tr.append(tdThumb, tdEn, tdZh, tdDesc);
-
-    tr.querySelectorAll('.copy').forEach(btn=>{
-      btn.addEventListener('click', async ()=>{
-        const text = btn.dataset.copy==="en" ? s.promptEn : s.promptZh;
-        try{ await navigator.clipboard.writeText(text); }
-        catch(_){ const t=document.createElement('textarea'); t.value=text; document.body.appendChild(t); t.select(); document.execCommand('copy'); t.remove(); }
-        const label = btn.textContent;
-        btn.textContent="已複製"; btn.classList.add('done');
-        setTimeout(()=>{btn.textContent=label; btn.classList.remove('done')},1200);
-      });
-    });
-
-    const input = tr.querySelector('.thumbInput');
-    input.addEventListener('change', e=>{
-      if(!requireAdmin()) return;
-      const file = e.target.files[0]; if(!file) return;
-      const r = new FileReader();
-      r.onload = ()=>{ const m=loadThumbs(); m[s.id]=r.result; saveThumbs(m); render(); refreshCounts(); };
-      r.readAsDataURL(file);
-    });
-    const clr = tr.querySelector('.clearThumb');
-    if(clr) clr.addEventListener('click', ()=>{ if(!requireAdmin())return; const m=loadThumbs(); delete m[s.id]; saveThumbs(m); render(); refreshCounts(); });
-
-    tr.querySelector('.delRow').addEventListener('click', ()=>deleteStyle(s));
-
-    tbody.appendChild(tr);
-  });
-
-  document.getElementById('count').textContent = `共 ${shown} 個風格` + ((q||c)?`（已篩選）`:"");
-}
-
-/* 刪除一筆提示詞：自訂 → 移除；內建 → 加入已刪除清單 */
-function deleteStyle(s){
-  if(!requireAdmin()) return;
-  if(!confirm(`確定刪除「${s.nameEn}／${s.nameZh}」這筆提示詞？`)) return;
-  if(s._user){
-    saveUser(loadUser().filter(x=>x.id!==s.id));
-  }else{
-    const del = loadDeleted(); if(!del.includes(s.id)){ del.push(s.id); saveDeleted(del); }
-  }
-  const m=loadThumbs(); delete m[s.id]; saveThumbs(m);
-  render(); refreshCounts();
-}
-
-/* 分類下拉 */
-function fillCats(){
-  const sel = document.getElementById('cat');
-  const fsel = document.getElementById('f_cat');
-  const cur = sel.value, fcur = fsel.value;
-  sel.innerHTML = `<option value="">全部分類</option>`;
-  fsel.innerHTML = "";
-  allCats().forEach(c=>{
-    sel.insertAdjacentHTML('beforeend', `<option>${esc(c)}</option>`);
-    fsel.insertAdjacentHTML('beforeend', `<option>${esc(c)}</option>`);
-  });
-  if([...sel.options].some(o=>o.value===cur)) sel.value=cur;
-  if([...fsel.options].some(o=>o.value===fcur)) fsel.value=fcur;
-}
-function renderCatChips(){
-  const box = document.getElementById('catChips');
-  const userCats = loadUserCats();
-  box.innerHTML = CATS_BUILTIN.map(c=>`<span class="chip">${esc(c)}</span>`).join("")+
-    userCats.filter(c=>!CATS_BUILTIN.includes(c)).map(c=>
-      `<span class="chip">${esc(c)}<button data-cat="${esc(c)}" title="移除此自訂分類">✕</button></span>`).join("");
-  box.querySelectorAll('button[data-cat]').forEach(b=>{
-    b.addEventListener('click', ()=>{
-      if(!requireAdmin())return;
-      saveUserCats(loadUserCats().filter(c=>c!==b.dataset.cat));
-      fillCats(); renderCatChips();
-    });
-  });
-}
-document.getElementById('addCatBtn').onclick = ()=>{
-  if(!requireAdmin())return;
-  const inp = document.getElementById('f_newcat');
-  const name = inp.value.trim();
-  if(!name) return;
-  if(allCats().includes(name)){ alert("此分類已存在"); return; }
-  saveUserCats(loadUserCats().concat([name]));
-  inp.value=""; fillCats(); renderCatChips();
-};
-
-/* ========= Google 登入 ========= */
-function isAdmin(){ return sessionStorage.getItem(AUTH_KEY) === ADMIN_EMAIL; }
-function requireAdmin(){ if(!isAdmin()){ openAuth(); return false; } return true; }
-function clientIdReady(){ return GOOGLE_CLIENT_ID && !GOOGLE_CLIENT_ID.startsWith("REPLACE_WITH_"); }
-
-function decodeJwt(token){
-  try{
-    const p = token.split('.')[1].replace(/-/g,'+').replace(/_/g,'/');
-    const json = decodeURIComponent(atob(p).split('').map(c=>'%'+('00'+c.charCodeAt(0).toString(16)).slice(-2)).join(''));
-    return JSON.parse(json);
-  }catch(e){ return null; }
-}
-
-let gsiInited = false;
-function initGsi(){
-  if(gsiInited || !clientIdReady() || !(window.google && google.accounts && google.accounts.id)) return;
-  google.accounts.id.initialize({ client_id: GOOGLE_CLIENT_ID, callback: onCredential });
-  gsiInited = true;
-}
-function onCredential(resp){
-  const payload = decodeJwt(resp.credential || "");
-  const errEl = document.getElementById('authErr');
-  if(!payload || !payload.email){ errEl.textContent = "登入失敗，請重試。"; return; }
-  if(payload.email_verified === false){ errEl.textContent = "此 Google 帳號未驗證電子郵件。"; return; }
-  if(payload.email.toLowerCase() !== ADMIN_EMAIL.toLowerCase()){
-    errEl.textContent = `此帳號無權限：${payload.email}`;
-    return;
-  }
-  sessionStorage.setItem(AUTH_KEY, ADMIN_EMAIL);
-  errEl.textContent = "";
-  document.getElementById('authOverlay').classList.remove('open');
-  openPanel();
-  setManage(true);
-}
-
-const authOverlay = document.getElementById('authOverlay');
-function openAuth(){
-  document.getElementById('authErr').textContent = "";
-  document.getElementById('adminEmailLabel').textContent = ADMIN_EMAIL;
-  authOverlay.classList.add('open');
-  if(!clientIdReady()){
-    document.getElementById('authWarn').style.display = "block";
-    document.getElementById('gbtn').innerHTML = "";
-    return;
-  }
-  initGsi();
-  const box = document.getElementById('gbtn');
-  box.innerHTML = "";
-  if(gsiInited){
-    google.accounts.id.renderButton(box, { theme:"filled_blue", size:"large", text:"signin_with", shape:"pill" });
-    google.accounts.id.prompt();
-  }else{
-    box.textContent = "正在載入 Google 登入…";
-    setTimeout(()=>{ initGsi(); if(gsiInited){ box.innerHTML=""; google.accounts.id.renderButton(box,{theme:"filled_blue",size:"large",text:"signin_with",shape:"pill"}); } }, 600);
-  }
-}
-document.getElementById('closeAuth').onclick = ()=> authOverlay.classList.remove('open');
-authOverlay.addEventListener('click', e=>{ if(e.target===authOverlay) authOverlay.classList.remove('open'); });
-
-/* ========= 管理面板 ========= */
-const overlay = document.getElementById('overlay');
-const fab = document.getElementById('fab');
-function setManage(on){
-  if(on && !isAdmin()) return;
-  document.body.classList.toggle('manage', on);
-  fab.textContent = on ? "⚙ 管理中" : "⚙ 管理";
-}
-function openPanel(){
-  overlay.classList.add('open');
-  document.getElementById('whoBar').innerHTML =
-    `已登入：${esc(sessionStorage.getItem(AUTH_KEY)||"")}<button class="signout" id="signout">登出</button>`;
-  document.getElementById('signout').onclick = signout;
-  refreshCounts(); renderCatChips();
-}
-function signout(){
-  sessionStorage.removeItem(AUTH_KEY);
-  if(clientIdReady() && window.google && google.accounts && google.accounts.id){ try{google.accounts.id.disableAutoSelect();}catch(e){} }
-  setManage(false);
-  overlay.classList.remove('open');
-}
-fab.onclick = ()=>{ if(isAdmin()){ openPanel(); } else { openAuth(); } };
-document.getElementById('closePanel').onclick = ()=> overlay.classList.remove('open');
-overlay.addEventListener('click', e=>{ if(e.target===overlay) overlay.classList.remove('open'); });
-document.getElementById('toggleManage').onclick = ()=>{ if(!requireAdmin())return; setManage(!document.body.classList.contains('manage')); };
-
-let pendingImg = "";
-document.getElementById('f_img').addEventListener('change', e=>{
-  const file = e.target.files[0];
-  if(!file){ pendingImg=""; return; }
-  const r = new FileReader();
-  r.onload = ()=>{ pendingImg = r.result; const p=document.getElementById('f_preview'); p.src=r.result; p.style.display="block"; };
-  r.readAsDataURL(file);
+const categories = [...new Set(data.map(item => item.category))];
+categories.forEach(name => {
+  const option = document.createElement("option");
+  option.value = name;
+  option.textContent = name;
+  cat.appendChild(option);
 });
 
-function nextId(){ return Math.max(0, ...BUILTIN.concat(loadUser()).map(s=>+s.id||0)) + 1; }
-
-document.getElementById('addBtn').onclick = ()=>{
-  if(!requireAdmin())return;
-  const en = document.getElementById('f_en').value.trim();
-  const zh = document.getElementById('f_zh').value.trim();
-  const cat = document.getElementById('f_cat').value;
-  const promptEn = document.getElementById('f_promptEn').value.trim();
-  const promptZh = document.getElementById('f_promptZh').value.trim();
-  const desc = document.getElementById('f_desc').value.trim();
-  if(!en || !promptEn){ alert("英文名稱與英文提示詞為必填"); return; }
-  const id = nextId();
-  const arr = loadUser();
-  arr.push({ id, cat, nameEn:en, nameZh:zh, thumb:"", promptEn, promptZh, desc, _user:true });
-  saveUser(arr);
-  if(pendingImg){ const m=loadThumbs(); m[id]=pendingImg; saveThumbs(m); }
-  clearForm();
-  render(); refreshCounts();
-};
-function clearForm(){
-  ['f_en','f_zh','f_promptEn','f_promptZh','f_desc'].forEach(id=>document.getElementById(id).value="");
-  document.getElementById('f_img').value="";
-  pendingImg=""; const p=document.getElementById('f_preview'); p.style.display="none"; p.src="";
-}
-document.getElementById('clearForm').onclick = clearForm;
-
-function refreshCounts(){
-  document.getElementById('userCount').textContent = loadUser().length;
-  document.getElementById('thumbCount').textContent = Object.keys(loadThumbs()).length;
-  document.getElementById('delCount').textContent = loadDeleted().length;
+async function copyText(text){
+  if(navigator.clipboard && window.isSecureContext){
+    try{
+      await navigator.clipboard.writeText(text);
+      return true;
+    }catch(_){
+      // Fall through to the textarea fallback for browsers that block clipboard writes.
+    }
+  }
+  const area = document.createElement("textarea");
+  area.value = text;
+  area.style.position = "fixed";
+  area.style.left = "0";
+  area.style.top = "0";
+  area.style.width = "1px";
+  area.style.height = "1px";
+  area.style.opacity = "0";
+  area.setAttribute("readonly", "");
+  document.body.appendChild(area);
+  area.focus();
+  area.select();
+  area.setSelectionRange(0, text.length);
+  const ok = document.execCommand("copy");
+  area.remove();
+  return ok;
 }
 
-document.getElementById('resetBtn').onclick = ()=>{
-  if(!requireAdmin())return;
-  if(confirm("確定要清除所有自訂風格？此動作無法復原。")){
-    localStorage.removeItem(LS_KEY); render(); refreshCounts();
-  }
-};
-document.getElementById('resetThumbs').onclick = ()=>{
-  if(!requireAdmin())return;
-  if(confirm("確定要清除所有已上傳的縮圖？此動作無法復原。")){
-    localStorage.removeItem(THUMB_KEY); render(); refreshCounts();
-  }
-};
-document.getElementById('restoreDel').onclick = ()=>{
-  if(!requireAdmin())return;
-  if(confirm("還原所有被刪除的內建提示詞？")){
-    localStorage.removeItem(DEL_KEY); render(); refreshCounts();
-  }
-};
+function showToast(message = "已複製英文提示詞"){
+  toast.textContent = message;
+  toast.classList.add("show");
+  clearTimeout(showToast.timer);
+  showToast.timer = setTimeout(() => toast.classList.remove("show"), 1200);
+}
 
-/* 匯出 styles.js（內建 + 自訂 + 已上傳縮圖，排除已刪除） */
-document.getElementById('exportBtn').onclick = ()=>{
-  if(!requireAdmin())return;
-  const thumbs = loadThumbs();
-  const del = new Set(loadDeleted());
-  const bake = s=>{ const o=stripFlag(s); if(thumbs[s.id]) o.thumb = thumbs[s.id]; return o; };
-  const merged = BUILTIN.concat(loadUser()).filter(s=>!del.has(s.id)).map(bake);
-  const body = merged.map(s=>"  "+JSON.stringify(s)).join(",\n");
-  const out =
-    "/* 風格資料庫 — 由後台匯出（內建 + 自訂 + 已上傳縮圖，排除已刪除） */\n"+
-    "window.CATEGORIES = "+JSON.stringify(allCats())+";\n\n"+
-    "window.STYLES = [\n"+body+"\n];\n";
-  const blob = new Blob([out], {type:"text/javascript;charset=utf-8"});
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob); a.download = "styles.js";
-  a.click(); URL.revokeObjectURL(a.href);
-};
-function stripFlag(s){ const o={...s}; delete o._user; return o; }
+function cardTemplate(item){
+  const article = document.createElement("article");
+  article.className = "card";
+  article.dataset.search = `${item.name} ${item.category} ${item.prompt}`.toLowerCase();
+  article.dataset.category = item.category;
+  article.innerHTML = `
+    <div class="thumbWrap">
+      <img class="thumb" src="${item.thumb}" alt="${item.name}" loading="lazy">
+      <div class="cat">${item.category}</div>
+    </div>
+    <div class="body">
+      <div class="titleRow">
+        <h2>${item.name}</h2>
+        <button class="copy" type="button" title="複製英文提示詞" aria-label="複製 ${item.name} 的英文提示詞">Copy</button>
+      </div>
+      <div class="promptLabel">Prompt</div>
+      <div class="prompt">${item.prompt}</div>
+    </div>
+  `;
+  article.querySelector(".copy").addEventListener("click", async () => {
+    const button = article.querySelector(".copy");
+    const ok = await copyText(item.prompt);
+    if(ok){
+      button.textContent = "OK";
+      button.classList.add("done");
+      showToast();
+      setTimeout(() => {
+        button.textContent = "Copy";
+        button.classList.remove("done");
+      }, 1100);
+    }else{
+      article.classList.add("expanded");
+      showToast("瀏覽器阻擋複製，請手動選取提示詞");
+    }
+  });
+  return article;
+}
 
-/* 初始化 */
-window.addEventListener('load', initGsi);
-fillCats();
-document.getElementById('q').addEventListener('input', render);
-document.getElementById('cat').addEventListener('change', render);
+function render(){
+  const term = q.value.trim().toLowerCase();
+  const selected = cat.value;
+  const filtered = data.filter(item => {
+    const textMatch = !term || `${item.name} ${item.category} ${item.prompt}`.toLowerCase().includes(term);
+    const catMatch = !selected || item.category === selected;
+    return textMatch && catMatch;
+  });
+  grid.replaceChildren(...filtered.map(cardTemplate));
+  empty.style.display = filtered.length ? "none" : "block";
+  count.textContent = `顯示 ${filtered.length} / ${data.length} 種風格`;
+}
+
+q.addEventListener("input", render);
+cat.addEventListener("change", render);
 render();
 </script>
 </body>
