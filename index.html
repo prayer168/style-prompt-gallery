@@ -4,6 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>風格資料庫 — NotebookLM / Banana AI 圖像風格生成器</title>
+<script src="https://accounts.google.com/gsi/client" async></script>
 <style>
 :root{
   --bg:#0b1220; --card:#111d2d; --line:#26364d; --text:#e9f0fa;
@@ -77,9 +78,6 @@ footer{margin-top:24px;text-align:center;color:var(--muted);border:1px solid var
   padding:13px 20px;cursor:pointer;box-shadow:0 10px 30px #0008}
 .fab:hover{filter:brightness(1.08)}
 body.manage .fab{background:linear-gradient(135deg,#e0b13f,#c98a3c)}
-.btnbar{display:flex;gap:8px}
-.toolBtn{border:1px solid var(--line);background:#16273c;color:#cfe0f5;border-radius:10px;padding:11px 14px;font-size:14px;cursor:pointer;font-family:inherit}
-.toolBtn:hover{filter:brightness(1.1)}
 .overlay{position:fixed;inset:0;background:#04070dcc;backdrop-filter:blur(3px);z-index:40;display:none;align-items:flex-start;justify-content:center;padding:30px 16px;overflow:auto}
 .overlay.open{display:flex}
 .panel{background:#0f1a2a;border:1px solid var(--line);border-radius:16px;width:100%;max-width:560px;padding:22px}
@@ -94,6 +92,8 @@ body.manage .fab{background:linear-gradient(135deg,#e0b13f,#c98a3c)}
 .field textarea{min-height:70px;resize:vertical}
 .row2{display:flex;gap:12px}
 .row2 .field{flex:1}
+.inlineRow{display:flex;gap:8px;align-items:center}
+.inlineRow input{flex:1}
 .preview{width:100%;aspect-ratio:16/9;border-radius:10px;border:1px dashed #33495f;object-fit:cover;background:#0a1422;margin-top:4px}
 .panel .actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:8px}
 .btn{border:none;border-radius:10px;padding:11px 16px;font-size:14px;cursor:pointer;font-family:inherit}
@@ -105,6 +105,19 @@ body.manage .fab{background:linear-gradient(135deg,#e0b13f,#c98a3c)}
 .exportHint{color:var(--muted);font-size:12.5px;line-height:1.6}
 .exportHint code{background:#0a1422;border:1px solid var(--line);border-radius:5px;padding:1px 5px}
 .close{float:right;background:transparent;border:none;color:var(--muted);font-size:20px;cursor:pointer;line-height:1}
+.chip{display:inline-flex;align-items:center;gap:6px;background:#13243a;border:1px solid var(--line);border-radius:999px;padding:4px 10px;font-size:12px;color:#cfe0f5;margin:0 6px 6px 0}
+.chip button{border:none;background:transparent;color:#ff8a8a;cursor:pointer;font-size:13px;line-height:1;padding:0}
+.who{font-size:12px;color:#9fe3b3;margin:0 0 12px}
+.who .signout{margin-left:8px;color:#ff9a9a;cursor:pointer;text-decoration:underline;background:none;border:none;font-size:12px}
+
+/* 登入視窗 */
+.authBox{text-align:center;padding:8px 4px}
+.authBox h3{font-size:18px;margin:0 0 6px}
+.authBox p{color:var(--muted);font-size:13px;margin:0 0 18px;line-height:1.6}
+#gbtn{display:flex;justify-content:center;min-height:44px}
+.authWarn{color:#ffb3b3;font-size:12.5px;margin-top:14px;line-height:1.6;text-align:left;background:#2a1414;border:1px solid #5e2b2b;border-radius:10px;padding:10px 12px;display:none}
+.authWarn code{background:#0a1422;border:1px solid var(--line);border-radius:5px;padding:1px 5px}
+.authErr{color:#ffb3b3;font-size:13px;margin-top:12px;min-height:18px}
 
 @media(max-width:900px){
   .col-thumb,.col-en,.col-zh{width:auto}
@@ -129,7 +142,7 @@ body.manage .fab{background:linear-gradient(135deg,#e0b13f,#c98a3c)}
     </div>
   </header>
   <div class="count" id="count"></div>
-  <div class="manageNote">管理模式已開啟：可在「縮圖」欄逐列上傳圖片，前端會即時顯示。上傳的縮圖暫存在這台瀏覽器，按「匯出 styles.js」可永久寫入。</div>
+  <div class="manageNote">管理模式已開啟：可在「縮圖」欄逐列上傳圖片、刪除任一提示詞、在面板新增分類。變更暫存在這台瀏覽器，按「匯出 styles.js」可永久寫入。</div>
 
   <div class="tableWrap">
     <table>
@@ -145,20 +158,49 @@ body.manage .fab{background:linear-gradient(135deg,#e0b13f,#c98a3c)}
     </table>
   </div>
 
-  <footer>每列分四欄：縮圖｜英文提示詞｜中文提示詞｜圖片說明。點各欄「複製」可複製提示詞。<br>右下角「管理模式」開啟後，可逐列上傳縮圖、新增風格與匯出。</footer>
+  <footer>每列分四欄：縮圖｜英文提示詞｜中文提示詞｜圖片說明。點各欄「複製」可複製提示詞。<br>右下角「管理」需以授權的 Google 帳號登入，才能上傳縮圖、新增分類、刪除提示詞與匯出。</footer>
 </div>
 
-<button class="fab" id="fab">⚙ 管理模式：關</button>
+<button class="fab" id="fab">⚙ 管理</button>
 
+<!-- 登入視窗 -->
+<div class="overlay" id="authOverlay">
+  <div class="panel authBox">
+    <button class="close" id="closeAuth" title="關閉">✕</button>
+    <h3>管理員登入</h3>
+    <p>請以授權的 Google 帳號登入後台。<br>僅 <b id="adminEmailLabel"></b> 可進入管理。</p>
+    <div id="gbtn"></div>
+    <div class="authErr" id="authErr"></div>
+    <div class="authWarn" id="authWarn">
+      尚未設定 Google OAuth Client ID。請在 <code>index.html</code> 把
+      <code>GOOGLE_CLIENT_ID</code> 換成你在 Google Cloud Console 建立的用戶端 ID，
+      並把本站網址加入「已授權的 JavaScript 來源」。設定步驟見 README。
+    </div>
+  </div>
+</div>
+
+<!-- 管理面板 -->
 <div class="overlay" id="overlay">
   <div class="panel">
     <button class="close" id="closePanel" title="關閉">✕</button>
-    <h3>管理模式</h3>
-    <p class="hint">管理模式下，表格「縮圖」欄會出現上傳按鈕，可逐列換上自己生成的縮圖。新增的風格與上傳的縮圖都先存在這台瀏覽器（localStorage），按「匯出 styles.js」可下載永久版本覆蓋原檔。</p>
+    <h3>後台管理</h3>
+    <p class="who" id="whoBar"></p>
+    <p class="hint">表格「縮圖」欄可逐列上傳自己生成的縮圖；可新增分類、刪除任一提示詞。所有變更先存在這台瀏覽器，按「匯出 styles.js」可下載永久版本覆蓋原檔。</p>
 
     <div class="actions">
       <button class="btn primary" id="toggleManage">切換管理模式</button>
     </div>
+
+    <div class="divider"></div>
+    <h3 style="font-size:16px">分類管理</h3>
+    <div class="field">
+      <label>新增分類</label>
+      <div class="inlineRow">
+        <input id="f_newcat" placeholder="例：教育教學">
+        <button class="btn ghost" id="addCatBtn">新增</button>
+      </div>
+    </div>
+    <div id="catChips"></div>
 
     <div class="divider"></div>
     <h3 style="font-size:16px">新增風格</h3>
@@ -200,11 +242,12 @@ body.manage .fab{background:linear-gradient(135deg,#e0b13f,#c98a3c)}
 
     <div class="divider"></div>
     <p class="exportHint">
-      自訂風格：<b id="userCount">0</b> 個；已上傳縮圖：<b id="thumbCount">0</b> 張。<br>
-      「匯出 styles.js」會下載含內建＋自訂＋已上傳縮圖的完整 <code>styles.js</code>，覆蓋專案同名檔即可永久保存、上傳 GitHub Pages。
+      自訂風格：<b id="userCount">0</b> 個；已上傳縮圖：<b id="thumbCount">0</b> 張；已刪除：<b id="delCount">0</b> 筆。<br>
+      「匯出 styles.js」會下載含內建＋自訂＋已上傳縮圖、且排除已刪除項目的完整 <code>styles.js</code>，覆蓋專案同名檔即可永久保存、上傳 GitHub Pages。
     </p>
     <div class="actions">
       <button class="btn primary" id="exportBtn">⬇ 匯出 styles.js</button>
+      <button class="btn ghost" id="restoreDel">還原已刪除</button>
       <button class="btn warn" id="resetThumbs">清除已上傳縮圖</button>
       <button class="btn warn" id="resetBtn">清除自訂風格</button>
     </div>
@@ -213,26 +256,38 @@ body.manage .fab{background:linear-gradient(135deg,#e0b13f,#c98a3c)}
 
 <script src="styles.js"></script>
 <script>
-const CATS = window.CATEGORIES || [];
+/* ========= 設定 ========= */
+const ADMIN_EMAIL = "prayer168@gmail.com";
+// 在 Google Cloud Console 建立 OAuth 2.0 用戶端 ID（網頁應用程式），貼到這裡：
+const GOOGLE_CLIENT_ID = "REPLACE_WITH_YOUR_CLIENT_ID.apps.googleusercontent.com";
+
+/* ========= 資料 ========= */
+const CATS_BUILTIN = window.CATEGORIES || [];
 const BUILTIN = window.STYLES || [];
 const LS_KEY = "userStyles_v1";
 const THUMB_KEY = "userThumbs_v1";
+const CAT_KEY = "userCats_v1";
+const DEL_KEY = "deletedIds_v1";
+const AUTH_KEY = "adminEmail_v1";
 
 function loadUser(){ try{return JSON.parse(localStorage.getItem(LS_KEY))||[]}catch(e){return[]} }
 function saveUser(arr){ localStorage.setItem(LS_KEY, JSON.stringify(arr)) }
 function loadThumbs(){ try{return JSON.parse(localStorage.getItem(THUMB_KEY))||{}}catch(e){return{}} }
 function saveThumbs(map){ localStorage.setItem(THUMB_KEY, JSON.stringify(map)) }
+function loadUserCats(){ try{return JSON.parse(localStorage.getItem(CAT_KEY))||[]}catch(e){return[]} }
+function saveUserCats(a){ localStorage.setItem(CAT_KEY, JSON.stringify(a)) }
+function loadDeleted(){ try{return JSON.parse(localStorage.getItem(DEL_KEY))||[]}catch(e){return[]} }
+function saveDeleted(a){ localStorage.setItem(DEL_KEY, JSON.stringify(a)) }
 
+function allCats(){ return CATS_BUILTIN.concat(loadUserCats().filter(c=>!CATS_BUILTIN.includes(c))); }
 function esc(t){return String(t==null?"":t).replace(/[<>&]/g,m=>({'<':'&lt;','>':'&gt;','&':'&amp;'}[m]))}
 
-/* 全部資料 = 內建 + 自訂 */
-function allStyles(){ return BUILTIN.concat(loadUser()); }
-
-/* 取縮圖：優先用已上傳，其次資料檔內建的 thumb */
-function thumbFor(s){
-  const map = loadThumbs();
-  return map[s.id] || s.thumb || "";
+/* 全部資料 = (內建 + 自訂) 去掉已刪除 */
+function allStyles(){
+  const del = new Set(loadDeleted());
+  return BUILTIN.concat(loadUser()).filter(s=>!del.has(s.id));
 }
+function thumbFor(s){ const map = loadThumbs(); return map[s.id] || s.thumb || ""; }
 
 function render(){
   const tbody = document.getElementById('tbody');
@@ -250,7 +305,6 @@ function render(){
     const tr = document.createElement('tr');
     const thumb = thumbFor(s);
 
-    // 縮圖欄
     const tdThumb = document.createElement('td');
     tdThumb.className = "col-thumb"; tdThumb.setAttribute('data-h','縮圖');
     tdThumb.innerHTML =
@@ -262,7 +316,6 @@ function render(){
         (thumb?`<button class="clearThumb" data-id="${s.id}">移除縮圖</button>`:``)+
       `</div>`;
 
-    // 英文提示詞欄
     const tdEn = document.createElement('td');
     tdEn.className = "col-en"; tdEn.setAttribute('data-h','英文提示詞');
     tdEn.innerHTML =
@@ -270,9 +323,8 @@ function render(){
       `<span class="tag">${esc(s.cat)}</span>`+
       `<div class="promptText">${esc(s.promptEn)}</div>`+
       `<button class="copy" data-copy="en">複製英文</button>`+
-      `<button class="delRow" data-id="${s.id}" ${s._user?'':'style="display:none"'}>刪除此列</button>`;
+      `<button class="delRow" data-id="${s.id}">刪除此列</button>`;
 
-    // 中文提示詞欄
     const tdZh = document.createElement('td');
     tdZh.className = "col-zh"; tdZh.setAttribute('data-h','中文提示詞');
     tdZh.innerHTML =
@@ -280,14 +332,12 @@ function render(){
       `<div class="promptZhText">${esc(s.promptZh)}</div>`+
       `<div style="margin-top:8px"><button class="copy" data-copy="zh">複製中文</button></div>`;
 
-    // 圖片說明欄
     const tdDesc = document.createElement('td');
     tdDesc.setAttribute('data-h','圖片說明');
     tdDesc.innerHTML = `<div class="desc">${esc(s.desc)}</div>`;
 
     tr.append(tdThumb, tdEn, tdZh, tdDesc);
 
-    // 複製
     tr.querySelectorAll('.copy').forEach(btn=>{
       btn.addEventListener('click', async ()=>{
         const text = btn.dataset.copy==="en" ? s.promptEn : s.promptZh;
@@ -299,20 +349,18 @@ function render(){
       });
     });
 
-    // 上傳縮圖
     const input = tr.querySelector('.thumbInput');
     input.addEventListener('change', e=>{
+      if(!requireAdmin()) return;
       const file = e.target.files[0]; if(!file) return;
       const r = new FileReader();
       r.onload = ()=>{ const m=loadThumbs(); m[s.id]=r.result; saveThumbs(m); render(); refreshCounts(); };
       r.readAsDataURL(file);
     });
     const clr = tr.querySelector('.clearThumb');
-    if(clr) clr.addEventListener('click', ()=>{ const m=loadThumbs(); delete m[s.id]; saveThumbs(m); render(); refreshCounts(); });
+    if(clr) clr.addEventListener('click', ()=>{ if(!requireAdmin())return; const m=loadThumbs(); delete m[s.id]; saveThumbs(m); render(); refreshCounts(); });
 
-    // 刪除自訂列
-    const del = tr.querySelector('.delRow');
-    if(del && s._user) del.addEventListener('click', ()=>removeUser(s.id));
+    tr.querySelector('.delRow').addEventListener('click', ()=>deleteStyle(s));
 
     tbody.appendChild(tr);
   });
@@ -320,27 +368,141 @@ function render(){
   document.getElementById('count').textContent = `共 ${shown} 個風格` + ((q||c)?`（已篩選）`:"");
 }
 
+/* 刪除一筆提示詞：自訂 → 移除；內建 → 加入已刪除清單 */
+function deleteStyle(s){
+  if(!requireAdmin()) return;
+  if(!confirm(`確定刪除「${s.nameEn}／${s.nameZh}」這筆提示詞？`)) return;
+  if(s._user){
+    saveUser(loadUser().filter(x=>x.id!==s.id));
+  }else{
+    const del = loadDeleted(); if(!del.includes(s.id)){ del.push(s.id); saveDeleted(del); }
+  }
+  const m=loadThumbs(); delete m[s.id]; saveThumbs(m);
+  render(); refreshCounts();
+}
+
 /* 分類下拉 */
 function fillCats(){
   const sel = document.getElementById('cat');
   const fsel = document.getElementById('f_cat');
-  CATS.forEach(c=>{
-    sel.insertAdjacentHTML('beforeend', `<option>${c}</option>`);
-    fsel.insertAdjacentHTML('beforeend', `<option>${c}</option>`);
+  const cur = sel.value, fcur = fsel.value;
+  sel.innerHTML = `<option value="">全部分類</option>`;
+  fsel.innerHTML = "";
+  allCats().forEach(c=>{
+    sel.insertAdjacentHTML('beforeend', `<option>${esc(c)}</option>`);
+    fsel.insertAdjacentHTML('beforeend', `<option>${esc(c)}</option>`);
+  });
+  if([...sel.options].some(o=>o.value===cur)) sel.value=cur;
+  if([...fsel.options].some(o=>o.value===fcur)) fsel.value=fcur;
+}
+function renderCatChips(){
+  const box = document.getElementById('catChips');
+  const userCats = loadUserCats();
+  box.innerHTML = CATS_BUILTIN.map(c=>`<span class="chip">${esc(c)}</span>`).join("")+
+    userCats.filter(c=>!CATS_BUILTIN.includes(c)).map(c=>
+      `<span class="chip">${esc(c)}<button data-cat="${esc(c)}" title="移除此自訂分類">✕</button></span>`).join("");
+  box.querySelectorAll('button[data-cat]').forEach(b=>{
+    b.addEventListener('click', ()=>{
+      if(!requireAdmin())return;
+      saveUserCats(loadUserCats().filter(c=>c!==b.dataset.cat));
+      fillCats(); renderCatChips();
+    });
   });
 }
+document.getElementById('addCatBtn').onclick = ()=>{
+  if(!requireAdmin())return;
+  const inp = document.getElementById('f_newcat');
+  const name = inp.value.trim();
+  if(!name) return;
+  if(allCats().includes(name)){ alert("此分類已存在"); return; }
+  saveUserCats(loadUserCats().concat([name]));
+  inp.value=""; fillCats(); renderCatChips();
+};
 
-/* ── 管理面板 ── */
+/* ========= Google 登入 ========= */
+function isAdmin(){ return sessionStorage.getItem(AUTH_KEY) === ADMIN_EMAIL; }
+function requireAdmin(){ if(!isAdmin()){ openAuth(); return false; } return true; }
+function clientIdReady(){ return GOOGLE_CLIENT_ID && !GOOGLE_CLIENT_ID.startsWith("REPLACE_WITH_"); }
+
+function decodeJwt(token){
+  try{
+    const p = token.split('.')[1].replace(/-/g,'+').replace(/_/g,'/');
+    const json = decodeURIComponent(atob(p).split('').map(c=>'%'+('00'+c.charCodeAt(0).toString(16)).slice(-2)).join(''));
+    return JSON.parse(json);
+  }catch(e){ return null; }
+}
+
+let gsiInited = false;
+function initGsi(){
+  if(gsiInited || !clientIdReady() || !(window.google && google.accounts && google.accounts.id)) return;
+  google.accounts.id.initialize({ client_id: GOOGLE_CLIENT_ID, callback: onCredential });
+  gsiInited = true;
+}
+function onCredential(resp){
+  const payload = decodeJwt(resp.credential || "");
+  const errEl = document.getElementById('authErr');
+  if(!payload || !payload.email){ errEl.textContent = "登入失敗，請重試。"; return; }
+  if(payload.email_verified === false){ errEl.textContent = "此 Google 帳號未驗證電子郵件。"; return; }
+  if(payload.email.toLowerCase() !== ADMIN_EMAIL.toLowerCase()){
+    errEl.textContent = `此帳號無權限：${payload.email}`;
+    return;
+  }
+  sessionStorage.setItem(AUTH_KEY, ADMIN_EMAIL);
+  errEl.textContent = "";
+  document.getElementById('authOverlay').classList.remove('open');
+  openPanel();
+  setManage(true);
+}
+
+const authOverlay = document.getElementById('authOverlay');
+function openAuth(){
+  document.getElementById('authErr').textContent = "";
+  document.getElementById('adminEmailLabel').textContent = ADMIN_EMAIL;
+  authOverlay.classList.add('open');
+  if(!clientIdReady()){
+    document.getElementById('authWarn').style.display = "block";
+    document.getElementById('gbtn').innerHTML = "";
+    return;
+  }
+  initGsi();
+  const box = document.getElementById('gbtn');
+  box.innerHTML = "";
+  if(gsiInited){
+    google.accounts.id.renderButton(box, { theme:"filled_blue", size:"large", text:"signin_with", shape:"pill" });
+    google.accounts.id.prompt();
+  }else{
+    box.textContent = "正在載入 Google 登入…";
+    setTimeout(()=>{ initGsi(); if(gsiInited){ box.innerHTML=""; google.accounts.id.renderButton(box,{theme:"filled_blue",size:"large",text:"signin_with",shape:"pill"}); } }, 600);
+  }
+}
+document.getElementById('closeAuth').onclick = ()=> authOverlay.classList.remove('open');
+authOverlay.addEventListener('click', e=>{ if(e.target===authOverlay) authOverlay.classList.remove('open'); });
+
+/* ========= 管理面板 ========= */
 const overlay = document.getElementById('overlay');
 const fab = document.getElementById('fab');
 function setManage(on){
+  if(on && !isAdmin()) return;
   document.body.classList.toggle('manage', on);
-  fab.textContent = on ? "⚙ 管理模式：開" : "⚙ 管理模式：關";
+  fab.textContent = on ? "⚙ 管理中" : "⚙ 管理";
 }
-fab.onclick = ()=>{ overlay.classList.add('open'); refreshCounts(); };
+function openPanel(){
+  overlay.classList.add('open');
+  document.getElementById('whoBar').innerHTML =
+    `已登入：${esc(sessionStorage.getItem(AUTH_KEY)||"")}<button class="signout" id="signout">登出</button>`;
+  document.getElementById('signout').onclick = signout;
+  refreshCounts(); renderCatChips();
+}
+function signout(){
+  sessionStorage.removeItem(AUTH_KEY);
+  if(clientIdReady() && window.google && google.accounts && google.accounts.id){ try{google.accounts.id.disableAutoSelect();}catch(e){} }
+  setManage(false);
+  overlay.classList.remove('open');
+}
+fab.onclick = ()=>{ if(isAdmin()){ openPanel(); } else { openAuth(); } };
 document.getElementById('closePanel').onclick = ()=> overlay.classList.remove('open');
 overlay.addEventListener('click', e=>{ if(e.target===overlay) overlay.classList.remove('open'); });
-document.getElementById('toggleManage').onclick = ()=>{ setManage(!document.body.classList.contains('manage')); };
+document.getElementById('toggleManage').onclick = ()=>{ if(!requireAdmin())return; setManage(!document.body.classList.contains('manage')); };
 
 let pendingImg = "";
 document.getElementById('f_img').addEventListener('change', e=>{
@@ -351,9 +513,10 @@ document.getElementById('f_img').addEventListener('change', e=>{
   r.readAsDataURL(file);
 });
 
-function nextId(){ return Math.max(0, ...allStyles().map(s=>+s.id||0)) + 1; }
+function nextId(){ return Math.max(0, ...BUILTIN.concat(loadUser()).map(s=>+s.id||0)) + 1; }
 
 document.getElementById('addBtn').onclick = ()=>{
+  if(!requireAdmin())return;
   const en = document.getElementById('f_en').value.trim();
   const zh = document.getElementById('f_zh').value.trim();
   const cat = document.getElementById('f_cat').value;
@@ -376,36 +539,42 @@ function clearForm(){
 }
 document.getElementById('clearForm').onclick = clearForm;
 
-function removeUser(id){
-  saveUser(loadUser().filter(s=>s.id!==id));
-  const m=loadThumbs(); delete m[id]; saveThumbs(m);
-  render(); refreshCounts();
-}
 function refreshCounts(){
   document.getElementById('userCount').textContent = loadUser().length;
   document.getElementById('thumbCount').textContent = Object.keys(loadThumbs()).length;
+  document.getElementById('delCount').textContent = loadDeleted().length;
 }
 
 document.getElementById('resetBtn').onclick = ()=>{
+  if(!requireAdmin())return;
   if(confirm("確定要清除所有自訂風格？此動作無法復原。")){
     localStorage.removeItem(LS_KEY); render(); refreshCounts();
   }
 };
 document.getElementById('resetThumbs').onclick = ()=>{
+  if(!requireAdmin())return;
   if(confirm("確定要清除所有已上傳的縮圖？此動作無法復原。")){
     localStorage.removeItem(THUMB_KEY); render(); refreshCounts();
   }
 };
+document.getElementById('restoreDel').onclick = ()=>{
+  if(!requireAdmin())return;
+  if(confirm("還原所有被刪除的內建提示詞？")){
+    localStorage.removeItem(DEL_KEY); render(); refreshCounts();
+  }
+};
 
-/* 匯出 styles.js（內建 + 自訂 + 已上傳縮圖烤進 thumb） */
+/* 匯出 styles.js（內建 + 自訂 + 已上傳縮圖，排除已刪除） */
 document.getElementById('exportBtn').onclick = ()=>{
+  if(!requireAdmin())return;
   const thumbs = loadThumbs();
+  const del = new Set(loadDeleted());
   const bake = s=>{ const o=stripFlag(s); if(thumbs[s.id]) o.thumb = thumbs[s.id]; return o; };
-  const merged = BUILTIN.map(bake).concat(loadUser().map(bake));
+  const merged = BUILTIN.concat(loadUser()).filter(s=>!del.has(s.id)).map(bake);
   const body = merged.map(s=>"  "+JSON.stringify(s)).join(",\n");
   const out =
-    "/* 風格資料庫 — 由管理面板匯出（內建 + 自訂 + 已上傳縮圖） */\n"+
-    "window.CATEGORIES = "+JSON.stringify(CATS)+";\n\n"+
+    "/* 風格資料庫 — 由後台匯出（內建 + 自訂 + 已上傳縮圖，排除已刪除） */\n"+
+    "window.CATEGORIES = "+JSON.stringify(allCats())+";\n\n"+
     "window.STYLES = [\n"+body+"\n];\n";
   const blob = new Blob([out], {type:"text/javascript;charset=utf-8"});
   const a = document.createElement('a');
@@ -415,6 +584,7 @@ document.getElementById('exportBtn').onclick = ()=>{
 function stripFlag(s){ const o={...s}; delete o._user; return o; }
 
 /* 初始化 */
+window.addEventListener('load', initGsi);
 fillCats();
 document.getElementById('q').addEventListener('input', render);
 document.getElementById('cat').addEventListener('change', render);

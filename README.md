@@ -46,6 +46,38 @@
   promptZh: "你的中文提示詞", desc: "圖片說明" }
 ```
 
+## 後台管理（Google 帳號登入）
+
+右下角「⚙ 管理」需以授權的 Google 帳號（`prayer168@gmail.com`）登入才能進入。登入後可：
+
+- 逐列上傳縮圖、新增風格
+- **新增分類**（面板「分類管理」）
+- **刪除任一提示詞**（每列「刪除此列」；內建項目可在「還原已刪除」復原）
+- 匯出 `styles.js`
+
+> 安全性說明：本站是純前端靜態網站，這層登入屬於「介面把關」，資料僅存在你自己的瀏覽器，不影響整體安全。
+
+### 設定 Google OAuth Client ID（一次性，約 5 分鐘）
+
+登入功能需要一組你自己的 OAuth 用戶端 ID：
+
+1. 前往 [Google Cloud Console → 憑證](https://console.cloud.google.com/apis/credentials)（用 `prayer168@gmail.com` 登入）。
+2. 建立專案（若還沒有）→ 視需要設定「OAuth 同意畫面」（User type 選 External，填應用程式名稱、支援信箱即可）。
+3. 點「建立憑證 → OAuth 用戶端 ID」→ 應用程式類型選「**網頁應用程式**」。
+4. 在「**已授權的 JavaScript 來源**」加入：
+   - `https://prayer168.github.io`
+   - `http://localhost:8123`（本機測試用，選填）
+5. 建立後複製「用戶端 ID」（形如 `xxxx.apps.googleusercontent.com`）。
+6. 打開 `index.html`，把這行的字串換成你的用戶端 ID：
+
+   ```js
+   const GOOGLE_CLIENT_ID = "REPLACE_WITH_YOUR_CLIENT_ID.apps.googleusercontent.com";
+   ```
+
+7. 存檔、`git push`。約 1 分鐘後線上版即可用 Google 登入。
+
+> 只想換管理員帳號？改 `index.html` 裡的 `const ADMIN_EMAIL = "prayer168@gmail.com";` 即可。
+
 ## 更新與部署
 
 於 `notebook_style_web/` 目錄下：
